@@ -32,6 +32,11 @@ object Plugin extends sbt.Plugin {
     "A function which returns the file containing the ivy report from the ivy cache for a given configuration")
   val ivyReport = TaskKey[File]("ivy-report",
     "A task which returns the location of the ivy report file for a given configuration (default `compile`).")
+  val dependencyGraphHTMLFile = SettingKey[File]("dependency-graph-html-file",
+  	"The location the html file should be generated at")
+  val dependencyGraphHTML = TaskKey[File]("dependency-graph-html",
+  	"A task which creates a HTML file with ascii graph information.")
+
 
   def graphSettings = seq(
     ivyReportFunction <<= (projectID, ivyModule, appConfiguration) map { (projectID, ivyModule, config) =>
@@ -45,7 +50,9 @@ object Plugin extends sbt.Plugin {
     asciiGraph <<= asciiGraphTask,
     dependencyGraph <<= printAsciiGraphTask,
     dependencyGraphMLFile <<= target / "dependencies-%s.graphml".format(config.toString),
-    dependencyGraphML <<= dependencyGraphMLTask
+    dependencyGraphML <<= dependencyGraphMLTask,
+    dependencyGraphHTMLFile <<= target / "dependencies-%s.html".format(config.toString),
+    dependencyGraphHTML <<= dependencyGraphHTMLTask
   ))
 
   def asciiGraphTask = (ivyReport) map { report =>
@@ -59,6 +66,13 @@ object Plugin extends sbt.Plugin {
     (ivyReport, dependencyGraphMLFile, streams) map { (report, resultFile, streams) =>
       IvyGraphMLDependencies.transform(report.getAbsolutePath, resultFile.getAbsolutePath)
       streams.log.info("Wrote dependency graph to '%s'" format resultFile)
+      resultFile
+    }
+
+  def dependencyGraphHTMLTask =
+    (ivyReport, dependencyGraphHTMLFile, streams) map { (report, resultFile, streams) =>
+      IvyGraphMLDependencies.transformToHTML(report.getAbsolutePath, resultFile.getAbsolutePath)
+      streams.log.info("Wrote dependency graph html to '%s'" format resultFile)
       resultFile
     }
 

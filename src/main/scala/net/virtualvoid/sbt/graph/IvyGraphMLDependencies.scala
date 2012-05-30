@@ -93,6 +93,36 @@ object IvyGraphMLDependencies extends App {
 
     XML.save(outputFile, xml)
   }
+
+
+  def transformToHTML(ivyReportFile: String, outputFile: String) {
+  	val doc = buildDoc(ivyReportFile)
+    val graph = buildGraph(doc)
+    import graph._
+
+    val contentType = "text/html; charset=ISO-8859-1"
+
+    val htmlEntry =
+      for (n <- nodes)
+        yield
+          <li class='dependency'>{n.id}</li>
+
+    val html =
+      <html>
+    		<head>
+    			<title>Testando a bagaça</title>
+    			<meta http-equiv="content-type" content={contentType}/>
+    		</head>
+    		<body>
+    			<ul class="dependencies">
+    				{htmlEntry}
+    			</ul>
+    		</body>
+    	</html>
+
+    XML.save(outputFile, html)
+  }
+
   private def nodeFromElement(element: Node, version: String): Module =
     Module(element.attribute("organisation").get.text, element.attribute("name").get.text, version)
 
@@ -107,5 +137,5 @@ object IvyGraphMLDependencies extends App {
 
   val file = args.lift(0).filter(f => new File(f).exists).getOrElse(die(usage))
   val inputFile = args.lift(1).getOrElse(die(usage))
-  transform(file, inputFile)
+  transformToHTML(file, inputFile)
 }
